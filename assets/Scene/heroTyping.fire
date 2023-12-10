@@ -158,7 +158,7 @@
       "__type__": "cc.Vec3",
       "x": 0,
       "y": 0,
-      "z": 271.24159850469385
+      "z": 272.9328165104791
     },
     "_scale": {
       "__type__": "cc.Vec3",
@@ -1827,9 +1827,7 @@
     ],
     "_srcBlendFactor": 770,
     "_dstBlendFactor": 771,
-    "_spriteFrame": {
-      "__uuid__": "8cdb44ac-a3f6-449f-b354-7cd48cf84061"
-    },
+    "_spriteFrame": null,
     "_type": 0,
     "_sizeMode": 1,
     "_fillType": 0,
@@ -1930,7 +1928,10 @@
     "spineBoy": {
       "__id__": 50
     },
-    "test": null,
+    "boxImage": {
+      "__uuid__": "5434bdb4-0d07-4249-ae54-3892d42247a1"
+    },
+    "speedMove": 0.5,
     "_id": "2a5hEgcHFM6Yef+U77+p+V"
   },
   {

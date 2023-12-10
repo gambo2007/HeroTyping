@@ -17,17 +17,19 @@ cc.Class({
         checkPoint: cc.Node,
         wordPrefab: cc.Prefab,
         spineBoy: sp.Skeleton,
-        test: cc.EditBox
+        boxImage:cc.SpriteFrame,
+        speedMove:{
+            default: 1
+        }
     },
 
     // LIFE-CYCLE CALLBACKS:
 
     onLoad() {
-        this.wordTyping = randomWords(1);
-        cc.log(this.wordTyping)
+        cc.log(this.speedMove)
         this.isTyping = false;
         let action = cc.sequence(
-            cc.moveBy(1, -96, 0),
+            cc.moveBy(this.speedMove, -96, 0),
             cc.callFunc((e) => {
                 this.checkStop(e, this.checkPoint)
             }),).repeatForever()
@@ -45,6 +47,7 @@ cc.Class({
             this.isTyping = true;
         }
         if (e.x < -955) {
+            e.getChildren()[0].getComponent(cc.Sprite).spriteFrame = this.boxImage;
             e.getChildren()[0].removeAllChildren();
             e.x = 1920;
             this.isTyping = false;
