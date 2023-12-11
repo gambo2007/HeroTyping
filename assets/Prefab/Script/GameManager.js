@@ -164,7 +164,7 @@ cc.Class({
         if(this.hp.progress <= 0.01){
             this.spineBoy.setAnimation(0, "death", false);
             this.scores ={
-                namePlayer:"tai",
+                namePlayer:this.namePlayer.string,
                 enemyDie:this.enemyDie,
                 missEnemy:this.missEnemy
             }
