@@ -170,7 +170,7 @@ cc.Class({
             }
             var jsonString = JSON.stringify(this.scores);
             cc.sys.localStorage.setItem("scoresData", jsonString);
-            this.bg.active = false;
+            this.bg.destroy();
             this.finalPage.active = true;
         }
     },
