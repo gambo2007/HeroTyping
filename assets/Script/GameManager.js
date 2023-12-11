@@ -16,8 +16,14 @@ cc.Class({
         backGround: [cc.Node],
         checkPoint: cc.Node,
         wordPrefab: cc.Prefab,
+        wordPrefab2:cc.Prefab,
         spineBoy: sp.Skeleton,
         boxImage:cc.SpriteFrame,
+        spineShark:sp.Skeleton,
+        hp:cc.ProgressBar,
+        bg:cc.Node,
+        finalPage:cc.Node,
+        namePlayer:cc.Label,
         speedMove:{
             default: 1
         }
@@ -25,7 +31,10 @@ cc.Class({
 
     // LIFE-CYCLE CALLBACKS:
 
-    onLoad() {
+    onEnable() {
+        var jsonString = cc.sys.localStorage.getItem("PlayerData");
+        var loadData = JSON.parse(jsonString);
+        this.namePlayer.string = loadData.namePlayer;
         cc.log(this.speedMove)
         this.isTyping = false;
         let action = cc.sequence(
@@ -36,6 +45,9 @@ cc.Class({
         this.backGround[0].runAction(action);
         this.backGround[1].runAction(action.clone());
         this.backGround[2].runAction(action.clone());
+        this.backGround[3].runAction(action.clone());
+        this.enemyDie = 0;
+        this.missEnemy = 0;
     },
 
     checkStop(e, checkPoint) {
@@ -47,49 +59,119 @@ cc.Class({
             this.isTyping = true;
         }
         if (e.x < -955) {
-            e.getChildren()[0].getComponent(cc.Sprite).spriteFrame = this.boxImage;
+            e.getChildren()[0].opacity = 255;
             e.getChildren()[0].removeAllChildren();
-            e.x = 1920;
+            e.getChildren()[0].active = true;
+            this.spineShark.setAnimation(0,"Idle",false);
+            e.x = 2880;
+            
             this.isTyping = false;
         }
     },
 
     showWord(parentNode) {
-        cc.game.canvas.focus();
-        let randomWord = randomWords(1);
-        let word = cc.instantiate(this.wordPrefab);
-        let wordLabel = word.getChildByName("BG").getChildByName("Word").getComponent(cc.Label);
-        wordLabel.string = randomWord;
-        word.setParent(parentNode.getChildren()[0]);
-        let editBox = word.getChildByName("EditBox").getComponent(cc.EditBox);
-        this.typing(wordLabel, editBox);
+        cc.log(parentNode.getChildren()[0].name);
+        if(parentNode.getChildren()[0].name === "Shark"){
+            let randomWord = randomWords(5);
+            let word = cc.instantiate(this.wordPrefab2);
+            let wordLabel = word.getChildByName("BG").getChildByName("Word").getComponent(cc.Label);
+           cc.log(randomWord);
+           let stringLabel="";
+            for(let i = 0;i<randomWord.length;i++){
+                stringLabel = stringLabel + randomWord[i]+ " ";
+            }
+            cc.log(stringLabel)
+            stringLabel = stringLabel.slice(0,stringLabel.length-1)
+            // wordLabel.string = randomWord.forEach((word)=>{
+            //     word += " ";
+            // });
+            wordLabel.string = stringLabel;
+            word.setParent(parentNode.getChildren()[0]);
+            let editBox = word.getChildByName("EditBox").getComponent(cc.EditBox);
+            this.typing(wordLabel, editBox);
+            this.bossAction();
+        }
+        else{
+            let randomWord = randomWords(1);
+            let word = cc.instantiate(this.wordPrefab);
+            let wordLabel = word.getChildByName("BG").getChildByName("Word").getComponent(cc.Label);
+            wordLabel.string = randomWord;
+            word.setParent(parentNode.getChildren()[0]);
+            let editBox = word.getChildByName("EditBox").getComponent(cc.EditBox);
+            this.typing(wordLabel, editBox);
+        }
+        
 
     },
 
     typing(wordLabel, editBox) {
+        
         cc.log(editBox)
         editBox.focus();
+        editBox.node.on('editing-did-ended',()=>{
+            cc.log("focus")
+            cc.log(editBox.string);
+            if(editBox.string === "")
+                editBox.focus();
+            else{
+                editBox.blur();
+            }
+       })
         editBox.node.on('editing-return', () => {
+            if(editBox.string === ""){
+                return;
+            }
             if (wordLabel.string === editBox.string) {
                 wordLabel.node.color = cc.Color.GREEN;
                 editBox.node.getChildren()[1].color = cc.Color.GREEN;
                 cc.log(editBox.node.parent)
+                this.enemyDie++;
             } else {
                 wordLabel.node.color = cc.Color.RED;
                 editBox.node.getChildren()[1].color = cc.Color.RED;
+                this.hp.progress -=0.1;
+                this.missEnemy++;
+                this.checkDie();
+                
             }
-            editBox.node.parent.parent.getComponent(cc.Animation).getAnimationState("box").play();
+            cc.tween(editBox.node.parent.parent).to(2,{opacity:0}).start();
+            if(editBox.node.parent.parent.name === "Shark"){
+                this.spineShark.node.stopAllActions();
+                this.spineShark.node.active =false;
+            }
+            //editBox.node.parent.parent.getComponent(cc.Animation).getAnimationState("box").play();
             this.spineBoy.setAnimation(0, "run", true);
             this.backGround.forEach((backGround) => backGround.resumeAllActions())
+            
+            //this.editBox.blur();
+            // this.editBox.focus();
         }, this);
     },
-    onKeyDown() {
-        cc.log("hello")
-        // Ghi nhận khi một phím được nhấn
-        var keyCode = event.keyCode;
-        if ((keyCode)) {
-            cc.log("Phím " + String.fromCharCode(keyCode) + " được nhấn.");
-            return "hesssllo";
+    bossAction(){
+        let action = cc.sequence(cc.delayTime(2),cc.callFunc(()=>{
+            this.spineShark.setAnimation(0,"Attack_2",false);
+        }),
+        cc.delayTime(0.7),
+        cc.callFunc(()=>{
+            this.hp.progress -=0.2;
+            this.checkDie();
+           // this.spineShark.setAnimation(1,"Idle",false)
+        })
+        ).repeatForever();
+        this.spineShark.node.runAction(action);
+    },
+    checkDie(){
+        if(this.hp.progress <= 0.01){
+            this.spineBoy.setAnimation(0, "death", false);
+            this.scores ={
+                namePlayer:"tai",
+                enemyDie:this.enemyDie,
+                missEnemy:this.missEnemy
+            }
+            var jsonString = JSON.stringify(this.scores);
+            cc.sys.localStorage.setItem("scoresData", jsonString);
+            this.bg.active = false;
+            this.finalPage.active = true;
         }
     },
     update(dt) {
@@ -99,4 +181,6 @@ cc.Class({
             this.timer = 0;
         }
     },
+
+
 });
